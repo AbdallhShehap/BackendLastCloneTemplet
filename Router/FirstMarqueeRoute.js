@@ -33,17 +33,21 @@ const storage = multer.diskStorage({
     let values = [];
     
     if (imagePath) {
-      sql += '`image-first-marquee-path`';
+      sql += '`imageFirstMarqueePath`';
       placeholders.push('?');
       values.push(imagePath);
+    
+      if (titlefirstmarquee) {
+        sql += ', '; // Add a comma only if there was also an image
+      }
     }
-  
-    if (titlefirstmarquee) {
-      if (imagePath) sql += ', '; // Add a comma only if there was also an image
-      sql += '`title-first-marquee`';
-      placeholders.push('?');
-      values.push(titlefirstmarquee);
-    }
+
+
+  if (titlefirstmarquee) {
+  sql += '`title-first-marquee`';
+  placeholders.push('?');
+  values.push(titlefirstmarquee);
+}
     
     if (placeholders.length === 0) {
       return res.status(400).send('No data provided.');

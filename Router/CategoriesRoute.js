@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
   const upload = multer({ storage: storage });
 
 
-// name id in the categories table  id-category				
+// name id in the categories table  id				
 
 
 // Route to handle file upload and add title
@@ -33,10 +33,10 @@ router.post('/addcategory', upload.single('imagecategory'), (req, res) => {
     }
     
     const imagePath = path.join('images', req.file.filename);
-    const { toptext , bottomtext } = req.body; // Get the title from the request body
+    const { toptext , bottomtext ,category } = req.body; // Get the title from the request body
   
     // Insert the image path and title into the database
-    dataCategory.query('INSERT INTO categories (`image-category-path`, `toptext-category`, `bottomtext-category`) VALUES (?, ?,?)', [imagePath, toptext , bottomtext ], (error, results) => {
+    dataCategory.query('INSERT INTO categories (`imageCategoryPath`, `toptext`, `bottomtext` , `category`) VALUES (?,?,?,?)', [imagePath, toptext , bottomtext, category ], (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -70,7 +70,7 @@ router.get('/categories', async (req, res) => {
 // Get a single category by ID
 router.get('/categories/:id', async (req, res) => {
   const id = req.params.id;
-  dataCategory.query('SELECT * FROM `categories` WHERE `id-category` = ?', [id], (error, results) => {
+  dataCategory.query('SELECT * FROM `categories` WHERE `id` = ?', [id], (error, results) => {
     if (error) {
       console.error(error);
       return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -93,22 +93,26 @@ router.put('/categories/:id', upload.single('imagecategory'), (req, res) => {
   
   if (req.file) {
     const imagePath = path.join('images', req.file.filename);
-    sql += '`image-category-path` = ?, ';
+    sql += '`imageCategoryPath` = ?, ';
     values.push(imagePath);
   }
   if (req.body.toptext) {
-    sql += '`toptext-category` = ?, ';
+    sql += '`toptext` = ?, ';
     values.push(req.body.toptext);
   }
   if (req.body.bottomtext) {
-    sql += '`bottomtext-category` = ?, ';
+    sql += '`bottomtext` = ?, ';
     values.push(req.body.bottomtext);
+  }
+  if (req.body.category) {
+    sql += '`category` = ?, ';
+    values.push(req.body.category);
   }
 
   // Remove the last comma and space if we added values
   if (values.length > 0) {
     sql = sql.slice(0, -2); // Remove last comma and space
-    sql += ' WHERE `id-category` = ?';
+    sql += ' WHERE `id` = ?';
     values.push(id);
 
     dataCategory.query(sql, values, (error, results) => {
@@ -135,13 +139,13 @@ router.delete('/categories/:id', async (req, res) => {
   // You might want to remove this part if the images are shared between categories or used elsewhere
   
   // Get the image path before deleting the category
-  dataCategory.query('SELECT `image-category-path` FROM `categories` WHERE `id-category` = ?', [id], (error, result) => {
+  dataCategory.query('SELECT `imageCategoryPath` FROM `categories` WHERE `id` = ?', [id], (error, result) => {
     if (error) {
       console.error(error);
       return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
     }
     if (result.length > 0) {
-      const imagePath = result[0]['image-category-path'];
+      const imagePath = result[0]['imageCategoryPath'];
       fs.unlink(path.join(__dirname, '..', imagePath), (err) => {
         // even if error on image deletion, proceed to delete the category
         if (err) {
@@ -151,7 +155,7 @@ router.delete('/categories/:id', async (req, res) => {
     }
 
     // Now delete the category
-    dataCategory.query('DELETE FROM `categories` WHERE `id-category` = ?', [id], (error) => {
+    dataCategory.query('DELETE FROM `categories` WHERE `id` = ?', [id], (error) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });

@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
 
 
   router.post('/add', upload.single('imagesecoundmarquee'), (req, res) => {
-    const { titlesecoundmarquee } = req.body; // Get the title from the request body, could be undefined
+    const {titlesecoundmarquee } = req.body; // Get the title from the request body, could be undefined
     let imagePath = req.file ? path.join('images', req.file.filename) : null; // Set imagePath only if a file was uploaded
     
     // Construct the SQL query dynamically based on what data is provided
@@ -33,7 +33,7 @@ const storage = multer.diskStorage({
     let values = [];
     
     if (imagePath) {
-      sql += '`image-secound-marquee-path`';
+      sql += '`imageSecoundMarqueePath`';
       placeholders.push('?');
       values.push(imagePath);
     }
@@ -87,7 +87,7 @@ const storage = multer.diskStorage({
 router.get('/secoundmarquee/:id', async (req, res) => {
     const id = req.params.id;
   
-    dataCategory.query('SELECT `image-secound-marquee-path`, `title-secound-marquee` FROM secoundmarquee WHERE `id-secound-marquee` = ?', [id], (error, results) => {
+    dataCategory.query('SELECT `imageSecoundMarqueePath`, `title-secound-marquee` FROM secoundmarquee WHERE `id-secound-marquee` = ?', [id], (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -108,7 +108,7 @@ router.put('/secoundmarquee/:id', upload.single('imagesecoundmarquee'), (req, re
     const newImagePath = req.file ? path.join('images', req.file.filename) : undefined;
   
     // Update the database entry
-    dataCategory.query('UPDATE secoundmarquee SET `image-secound-marquee-path` = ?, `title-secound-marquee` = ? WHERE `id-secound-marquee` = ?', [newImagePath, titlesecoundmarquee, id], (error, results) => {
+    dataCategory.query('UPDATE secoundmarquee SET `imageSecoundMarqueePath` = ?, `title-secound-marquee` = ? WHERE `id-secound-marquee` = ?', [newImagePath, titlesecoundmarquee, id], (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -129,7 +129,7 @@ router.put('/secoundmarquee/:id', upload.single('imagesecoundmarquee'), (req, re
     const id = req.params.id;
   
     // Get the current image path from the database
-    dataCategory.query('SELECT `image-secound-marquee-path` FROM secoundmarquee WHERE `id-secound-marquee` = ?', [id], (error, results) => {
+    dataCategory.query('SELECT `imageSecoundMarqueePath` FROM secoundmarquee WHERE `id-secound-marquee` = ?', [id], (error, results) => {
         if (error) {
             console.error(error);
             return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -139,7 +139,7 @@ router.put('/secoundmarquee/:id', upload.single('imagesecoundmarquee'), (req, re
             return res.status(404).send('Entry not found.');
         }
 
-        const imagePath = results[0]['image-secound-marquee-path'];
+        const imagePath = results[0]['imageSecoundMarqueePath'];
   
         // Function to delete the database record
         const deleteRecord = () => {

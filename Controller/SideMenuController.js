@@ -2,11 +2,11 @@ const dataCategory = require("../Module/allData");
 
 
 const addSidemenu = async (req, res) => {
-    const { titlesidemenu, subtitle1sidemenu, address, phonenumber, email, subtitle2sidemenu, textsidemenu } = req.body;
+    const { titlesidemenu, subtitle1sidemenu, subtitle2sidemenu, textsidemenu, placeHolderInput } = req.body;
 
     dataCategory.query(
-        'INSERT INTO sidemenu (`title-side-menu`, `subtitle1-side-menu`, `address`, `phone-number`, `email`, `subtitle2-side-menu`, `text-side-menu`) VALUES (?,?,?,?,?,?,?)',
-        [titlesidemenu, subtitle1sidemenu, address, phonenumber, email, subtitle2sidemenu, textsidemenu],
+        'INSERT INTO sidemenu (`titlesidemenu`, `subtitle1sidemenu`, `subtitle2sidemenu`, `textsidemenu`, `placeHolderInput`) VALUES (?,?,?,?,?)',
+        [titlesidemenu, subtitle1sidemenu, subtitle2sidemenu, textsidemenu, placeHolderInput],
         (error, results) => { // Changed 'res' to 'results' to prevent overwriting
             if (error) {
                 console.error(error);
@@ -52,11 +52,11 @@ const getSidemenus = async (req, res) => {
 
   const updateSidemenu = async (req, res) => {
     const id = req.params.id;
-    const { titlesidemenu, subtitle1sidemenu, address, phonenumber, email, subtitle2sidemenu, textsidemenu } = req.body;
+    const { titlesidemenu, subtitle1sidemenu, subtitle2sidemenu, textsidemenu, placeHolderInput } = req.body;
   
     dataCategory.query(
-      'UPDATE sidemenu SET `title-side-menu` = ?, `subtitle1-side-menu` = ?, `address` = ?, `phone-number` = ?, `email` = ?, `subtitle2-side-menu` = ?, `text-side-menu` = ? WHERE `id-side-menu` = ?',
-      [titlesidemenu, subtitle1sidemenu, address, phonenumber, email, subtitle2sidemenu, textsidemenu, parseInt(id, 10)], // Ensure id is an integer
+      'UPDATE sidemenu SET `titlesidemenu` = ?, `subtitle1sidemenu` = ?, `subtitle2sidemenu` = ?, `textsidemenu` = ? , `placeHolderInput` = ? WHERE `id-side-menu` = ?',
+      [titlesidemenu, subtitle1sidemenu, subtitle2sidemenu, textsidemenu, placeHolderInput , parseInt(id, 10)], // Ensure id is an integer
       (error, results) => {
         if (error) {
           console.error(error); // Log the detailed error to the console.

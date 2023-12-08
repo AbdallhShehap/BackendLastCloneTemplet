@@ -19,11 +19,11 @@ const addOurBenfitsContent = async (req, res) => {
 }
 
 const addOurBenfits = async (req, res) => {
-    const {sectiontitile, sectionsubtitile } = req.body;
+    const {sectionTitile, sectionSubtitile, imgSection } = req.body;
 
     dataCategory.query(
-        'INSERT INTO ourbenefits (`section-titile`, `section-subtitile`) VALUES (?,?)',
-        [sectiontitile, sectionsubtitile],
+        'INSERT INTO ourbenefits (`sectionTitile`, `sectionSubtitile` `imgSection` ) VALUES (?,?,?)',
+        [sectionTitile, sectionSubtitile, imgSection],
         (error, results) => { // Changed 'res' to 'results' to prevent overwriting
             if (error) {
                 console.error(error);
@@ -57,7 +57,7 @@ const getOurBenfits = async (req, res) => {
   
   const getOurBenfitsContentById = async (req, res) => {
     const id = req.params.id;
-    dataCategory.query('SELECT * FROM ourbenefitscontent WHERE `id-ourbenefits` = ?', [id], (error, results) => {
+    dataCategory.query('SELECT * FROM ourbenefitscontent WHERE `id` = ?', [id], (error, results) => {
       if (error) {
         console.error(error); // Log the error to the console for debugging.
         res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -73,7 +73,7 @@ const getOurBenfits = async (req, res) => {
 
   const getOurBenfitsById = async (req, res) => {
     const id = req.params.id;
-    dataCategory.query('SELECT * FROM ourbenefits WHERE `id-ourbenefits` = ?', [id], (error, results) => {
+    dataCategory.query('SELECT * FROM ourbenefits WHERE `id` = ?', [id], (error, results) => {
       if (error) {
         console.error(error); // Log the error to the console for debugging.
         res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -92,7 +92,7 @@ const getOurBenfits = async (req, res) => {
     const {sectiontitile, sectionsubtitile} = req.body;
   
     dataCategory.query(
-      'UPDATE ourbenefits SET `section-titile` = ?, `section-subtitile` = ? WHERE `id-ourbenefits` = ?',
+      'UPDATE ourbenefits SET `section-titile` = ?, `section-subtitile` = ? WHERE `id` = ?',
       [sectiontitile, sectionsubtitile, parseInt(id, 10)], // Ensure id is an integer
       (error, results) => {
         if (error) {
@@ -114,7 +114,7 @@ const getOurBenfits = async (req, res) => {
     const { title, content } = req.body;
   
     dataCategory.query(
-      'UPDATE ourbenefitscontent SET `title` = ?, `content` = ? WHERE `id-ourbenefits` = ?', 
+      'UPDATE ourbenefitscontent SET `title` = ?, `content` = ? WHERE `id` = ?', 
      
 
       [title, content, parseInt(id, 10)],
@@ -136,7 +136,7 @@ const getOurBenfits = async (req, res) => {
     
   const deleteOurBenfitsContent = async (req, res) => {
     const id = req.params.id;
-    dataCategory.query('DELETE FROM ourbenefitscontent WHERE `id-ourbenefits` = ?', [id], (error, results) => {
+    dataCategory.query('DELETE FROM ourbenefitscontent WHERE `id` = ?', [id], (error, results) => {
       if (error) {
         res.status(500).json({ error: 'Internal Server Error' });
       } else {
@@ -147,7 +147,7 @@ const getOurBenfits = async (req, res) => {
 
   const deleteOurBenfits = async (req, res) => {
     const id = req.params.id;
-    dataCategory.query('DELETE FROM ourbenefits WHERE `id-ourbenefits` = ?', [id], (error, results) => {
+    dataCategory.query('DELETE FROM ourbenefits WHERE `id` = ?', [id], (error, results) => {
       if (error) {
         res.status(500).json({ error: 'Internal Server Error' });
       } else {

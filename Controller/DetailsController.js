@@ -3,12 +3,12 @@ const dataDetails = require("../Module/allData");
 
 
 const adddetails = async (req, res) => {
-    const { yearsExperience, skilled, visited, numberProjects } = req.body;
+    const {text1, text2, number, displayK} = req.body;
 
 
     dataDetails.query(
-        'INSERT INTO details (`years-experience`, `skilled`, `visited`, `number-projects`) VALUES (?,?,?,?)',
-        [yearsExperience, skilled, visited, numberProjects],
+        'INSERT INTO `about-numbers` (`text1`, `text2`, `number`, `displayK`) VALUES (?,?,?,?)',
+        [text1, text2, number, displayK],
         (error, results) => { // Changed 'res' to 'results' to prevent overwriting
             if (error) {
                 console.error(error);
@@ -23,7 +23,7 @@ const adddetails = async (req, res) => {
 
 
 const getdetailss = async (req, res) => {
-    dataDetails.query('SELECT * FROM details', (error, results) => {
+    dataDetails.query('SELECT * FROM `about-numbers` ', (error, results) => {
       if (error) {
         res.status(500).json({ error: 'Internal Server Error' });
       } else {
@@ -36,7 +36,7 @@ const getdetailss = async (req, res) => {
   
   const getdetailsById = async (req, res) => {
     const id = req.params.id;
-    dataDetails.query('SELECT * FROM details WHERE `id` = ?', [id], (error, results) => {
+    dataDetails.query('SELECT * FROM `about-numbers` WHERE `id` = ?', [id], (error, results) => {
       if (error) {
         console.error(error); // Log the error to the console for debugging.
         res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -81,7 +81,7 @@ const updatedetails = async (req, res) => {
     queryParams.push(parseInt(id, 10)); // Ensure id is an integer
     
     // Finalize the SQL query
-    const sqlQuery = `UPDATE details SET ${setClause.join(', ')} WHERE id = ?`;
+    const sqlQuery = `UPDATE about-numbers SET ${setClause.join(', ')} WHERE id = ?`;
 
     dataDetails.query(sqlQuery, queryParams, (error, results) => {
         if (error) {
@@ -103,7 +103,7 @@ const updatedetails = async (req, res) => {
 
   const deletedetails = async (req, res) => {
     const id = req.params.id;
-    dataDetails.query('DELETE FROM details WHERE `id` = ?', [id], (error, results) => {
+    dataDetails.query('DELETE FROM `about-numbers` WHERE `id` = ?', [id], (error, results) => {
       if (error) {
         res.status(500).json({ error: 'Internal Server Error' });
       } else {

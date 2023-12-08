@@ -71,37 +71,88 @@ const storage = multer.diskStorage({
   const upload = multer({ storage: storage });
   
   // Route to handle file upload
-  router.post('/addimg', upload.single('imgourbenefits'), (req, res) => {
-    if (!req.file) {
-      return res.status(400).send('No file uploaded.');
-    }
+  router.post('/addfixedourbenefits', upload.single('imgourbenefits'), (req, res) => {
+
+    const { sectionTitile, sectionSubtitile } = req.body;
+
+    let imagePath = req.file ? path.join('images', req.file.filename) : null; // Set imagePath only if a file was uploaded
     
-    const imagePath = path.join('images', req.file.filename);
+    let sql = 'INSERT INTO ourbenefits (';
+    let placeholders = [];
+    let values = [];
+    
+    if (imagePath) {
+      sql += '`imgSection`';
+      placeholders.push('?');
+      values.push(imagePath);
+    }
+
+    
+    if (sectionTitile) {
+      if (imagePath) sql += ', '; // Add a comma only if there was also an image
+      sql += '`sectionTitile`';
+      placeholders.push('?');
+      values.push(sectionTitile);
+    }
+
+
+    if (sectionSubtitile) {
+      if (imagePath) sql += ', '; // Add a comma only if there was also an image
+      sql += '`sectionSubtitile`';
+      placeholders.push('?');
+      values.push(sectionSubtitile);
+    }
+
+    if (placeholders.length === 0) {
+      return res.status(400).send('No data provided.');
+    }
   
-    dataCategory.query('INSERT INTO imgourbenefits (`img-path-ourbenefits`) VALUES (?)', [imagePath], (error, results) => {
+    sql += ') VALUES (' + placeholders.join(', ') + ')';
+
+
+
+    
+    // Execute the SQL query with the values
+    dataCategory.query(sql, values, (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
-      return res.status(200).json({ message: 'Image added successfully', path: imagePath });
+      return res.status(200).json({ message: 'Our Benfits added successfully', path: imagePath, title: sectionTitile });
     });
   });
   
 
 
 
-
-
-  router.get('/imgourbenefits/:id', async (req, res) => {
-    const id = req.params.id;
+  router.get('/imgourbenefits', async (req, res) => {
+ 
   
-    dataCategory.query('SELECT `img-path-ourbenefits` FROM imgourbenefits WHERE `id-img-ourbenefits` = ?', [id], (error, results) => {
+    dataCategory.query('SELECT * FROM ourbenefits',  (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
       if (results.length > 0) {
-        const imagePath = results[0]['img-path-ourbenefits'];
+        res.status(200).json(results);
+      } else {
+        res.status(404).send('Entry not found.');
+      }
+    });
+  });
+  
+
+
+  router.get('/imgourbenefits/:id', async (req, res) => {
+    const id = req.params.id;
+  
+    dataCategory.query('SELECT `imgSection` FROM ourbenefits WHERE `id` = ?', [id], (error, results) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+      }
+      if (results.length > 0) {
+        const imagePath = results[0]['imgSection'];
         // Assuming you're serving the 'images' folder statically with Express
         res.status(200).json({ imagePath: imagePath });
       } else {
@@ -117,15 +168,13 @@ const storage = multer.diskStorage({
 
   router.put('/imgourbenefits/:id', upload.single('imgourbenefits'), (req, res) => {
     const id = req.params.id;
+    const {  sectionTitile, sectionSubtitile } = req.body;
   
-    if (!req.file) {
-      return res.status(400).send('No new file uploaded for update.');
-    }
-  
+ 
     const newImagePath = path.join('images', req.file.filename);
   
     // Update the database with the new image path
-    dataCategory.query('UPDATE imgourbenefits SET `img-path-ourbenefits` = ? WHERE `id-img-ourbenefits` = ?', [newImagePath, id], (error, results) => {
+    dataCategory.query('UPDATE ourbenefits SET `imgSection` = ? , `sectionTitile` = ?  , `sectionSubtitile` = ? WHERE `id` = ?', [newImagePath, sectionTitile, sectionSubtitile, id], (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -147,13 +196,13 @@ const storage = multer.diskStorage({
     const id = req.params.id;
   
     // First, get the current image path from the database
-    dataCategory.query('SELECT `img-path-ourbenefits` FROM imgourbenefits WHERE `id-img-ourbenefits` = ?', [id], (error, results) => {
+    dataCategory.query('SELECT `imgSection` FROM ourbenefits WHERE `id` = ?', [id], (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
       if (results.length > 0) {
-        const imagePath = results[0]['img-path-ourbenefits'];
+        const imagePath = results[0]['imgSection'];
   
         // Delete the image file
         fs.unlink(path.join(__dirname, '..', imagePath), (err) => {
@@ -163,7 +212,7 @@ const storage = multer.diskStorage({
           }
   
           // Delete the image path from the database
-          dataCategory.query('DELETE FROM imgourbenefits WHERE `id-img-ourbenefits` = ?', [id], (error) => {
+          dataCategory.query('DELETE FROM ourbenefits WHERE `id` = ?', [id], (error) => {
             if (error) {
               console.error(error);
               return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
