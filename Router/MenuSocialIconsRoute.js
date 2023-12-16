@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
 
 
   router.post('/addsocialiconmenu', upload.single('socialiconmenu'), (req, res) => {
-    const { link } = req.body; // Get the title from the request body, could be undefined
+    const { link, name } = req.body; // Get the title from the request body, could be undefined
     let imagePath = req.file ? path.join('images', req.file.filename) : null; // Set imagePath only if a file was uploaded
     
     // Construct the SQL query dynamically based on what data is provided
@@ -113,24 +113,50 @@ router.get('/socialiconmenu/:id', async (req, res) => {
 
 // Route to update an entry by ID
 router.put('/socialiconmenu/:id', upload.single('socialiconmenu'), (req, res) => {
-    const id = req.params.id;
-    const { link, name } = req.body; // Add the new field to be extracted from the request body
-    const newImagePath = req.file ? path.join('images', req.file.filename) : undefined;
+  const id = req.params.id;
+  const { link, name  } = req.body;
+
+  let updateQuery = 'UPDATE `social-icon-menu` SET ';
+  let updateValues = [];
   
-    // Update the database entry
-    dataCategory.query('UPDATE `social-icon-menu` SET `icon` = ?, `link` = ?, `name` = ? WHERE `id` = ?', [newImagePath, link, name, id], (error, results) => {
-      if (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
-      }
-      if (results.affectedRows > 0) {
-        res.status(200).json({ message: 'Details updated successfully', newPath: newImagePath, title: link });
-      } else {
-        res.status(404).send('Entry not found for update.');
-      }
-    });
+  if (req.file) {
+    const newImagePath = path.join('images', req.file.filename);
+    updateQuery += '`icon` = ?';
+    updateValues.push(newImagePath);
+  }
+
+  if (name) {
+    if (updateValues.length > 0) {
+      updateQuery += ', ';
+    }
+    updateQuery += '`name` = ?';
+    updateValues.push(name);
+  }
+
+  if (link) {
+    if (updateValues.length > 0) {
+      updateQuery += ', ';
+    }
+    updateQuery += '`link` = ?';
+    updateValues.push(link);
+  }
+
+  updateQuery += ' WHERE `id` = ?';
+  updateValues.push(id);
+
+  dataCategory.query(updateQuery, updateValues, (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    if (results.affectedRows > 0) {
+      res.status(200).json({ message: 'icon side menu updated successfully', newPath: req.file ? req.file.filename : 'No new image uploaded', name: name });
+    } else {
+      res.status(404).send('Entry not found for update.');
+    }
   });
-  
+});
+
 
 
   const fs = require('fs');

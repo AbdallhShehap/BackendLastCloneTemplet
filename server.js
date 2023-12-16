@@ -15,11 +15,12 @@ const ReviewsrRoute = require('./Router/Reviews');
 const IconUnderReviewsRoute = require('./Router/IconUnderReviewsRoute');
 const NewsSliderRoute = require('./Router/NewsSlider');
 const LogoRoute = require('./Router/LogoRoute');
-const FooterRoute = require('./router/FooterRoute');
+const FooterRoute = require('./Router/FooterRoute');
 const FooterSocialIconsRoute = require('./Router/FooterSocialIconsRoute');
 const MenuSocialIconsRoute = require('./Router/MenuSocialIconsRoute');
 const MainSectionRoute = require('./Router/MainSectionRoute');
 const AddPagesRoute = require('./Router/AddPagesRoute');
+const Superadmin = require('./Router/SuperadminRoute');
 
 const dotenv = require("dotenv");
 dotenv.config({path : "./config.env"});
@@ -31,11 +32,16 @@ const app = express();
 
 app.use(express.json());
 app.use(bodyParser.json());
-const cors = require("cor");
+const cors = require("cors");
+const SuperadminModel = require("./Module/SuperadminModel");
 app.use(cors());
 
 
 app.use('/images', express.static(path.join(__dirname, 'images')));
+
+
+// Use the Login route
+app.use('/admin', Superadmin);
 
 
 // Use the side menu route

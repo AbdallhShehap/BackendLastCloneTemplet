@@ -52,16 +52,16 @@ const FooterSecoundContentController =require('../Controller/FooterSecoundConten
 router.post('/addsecoundsectioncontent', FooterSecoundContentController.adddetails);
 
 // GET request to retrieve all Detailss
-router.get('/detailssecoundsectioncontent', FooterSecoundContentController.getdetailss);
+router.get('/detailssecoundsecitoncontent', FooterSecoundContentController.getdetailss);
 
 // GET request to retrieve a single Details by id
-router.get('/detailssecoundsectioncontent/:id', FooterSecoundContentController.getdetailsById);
+router.get('/detailssecoundsecitoncontent/:id', FooterSecoundContentController.getdetailsById);
 
 // PUT request to update a Details by id
-router.put('/detailssecoundsectioncontent/:id', FooterSecoundContentController.updatedetails);
+router.put('/detailssecoundsecitoncontent/:id', FooterSecoundContentController.updatedetails);
 
 // DELETE request to delete a Details by id
-router.delete('/detailssecoundsectioncontent/:id', FooterSecoundContentController.deletedetails);
+router.delete('/detailssecoundsecitoncontent/:id', FooterSecoundContentController.deletedetails);
 
 
 

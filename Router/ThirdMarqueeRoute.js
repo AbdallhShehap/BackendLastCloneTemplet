@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
 
 
   router.post('/add', upload.single('imagethirdmarquee'), (req, res) => {
-    const { titlethirdmarquee } = req.body; // Get the title from the request body, could be undefined
+    const { titleThirdMarquee } = req.body; // Get the title from the request body, could be undefined
     let imagePath = req.file ? path.join('images', req.file.filename) : null; // Set imagePath only if a file was uploaded
     
     // Construct the SQL query dynamically based on what data is provided
@@ -38,11 +38,11 @@ const storage = multer.diskStorage({
       values.push(imagePath);
     }
   
-    if (titlethirdmarquee) {
+    if (titleThirdMarquee) {
       if (imagePath) sql += ', '; // Add a comma only if there was also an image
-      sql += '`title-third-marquee`';
+      sql += '`titleThirdMarquee`';
       placeholders.push('?');
-      values.push(titlethirdmarquee);
+      values.push(titleThirdMarquee);
     }
     
     if (placeholders.length === 0) {
@@ -57,7 +57,7 @@ const storage = multer.diskStorage({
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
-      return res.status(200).json({ message: 'third Marquee added successfully', path: imagePath, title: titlethirdmarquee });
+      return res.status(200).json({ message: 'third Marquee added successfully', path: imagePath, title: titleThirdMarquee });
     });
   });
   
@@ -87,7 +87,7 @@ const storage = multer.diskStorage({
 router.get('/thirdmarquee/:id', async (req, res) => {
     const id = req.params.id;
   
-    dataCategory.query('SELECT `imageThirdMarqueePath`, `title-third-marquee` FROM thirdmarquee WHERE `id-third-marquee` = ?', [id], (error, results) => {
+    dataCategory.query('SELECT `imageThirdMarqueePath`, `titleThirdMarquee` FROM thirdmarquee WHERE `id-third-marquee` = ?', [id], (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -102,24 +102,44 @@ router.get('/thirdmarquee/:id', async (req, res) => {
   
 
 // Route to update an entry by ID
+
 router.put('/thirdmarquee/:id', upload.single('imagethirdmarquee'), (req, res) => {
-    const id = req.params.id;
-    const { titlethirdmarquee } = req.body; // Get the title from the request body
-    const newImagePath = req.file ? path.join('images', req.file.filename) : undefined;
+
+  const id = req.params.id;
+  const { titleThirdMarquee } = req.body;
+
+  let updateQuery = 'UPDATE thirdmarquee SET ';
+  let updateValues = [];
   
-    // Update the database entry
-    dataCategory.query('UPDATE thirdmarquee SET `imageThirdMarqueePath` = ?, `title-third-marquee` = ? WHERE `id-third-marquee` = ?', [newImagePath, titlethirdmarquee, id], (error, results) => {
-      if (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
-      }
-      if (results.affectedRows > 0) {
-        res.status(200).json({ message: 'third Marquee updated successfully', newPath: newImagePath, title: titlethirdmarquee });
-      } else {
-        res.status(404).send('Entry not found for update.');
-      }
-    });
+  if (req.file) {
+    const newImagePath = path.join('images', req.file.filename);
+    updateQuery += '`imageThirdMarqueePath` = ?';
+    updateValues.push(newImagePath);
+  }
+
+  if (titleThirdMarquee) {
+    if (updateValues.length > 0) {
+      updateQuery += ', ';
+    }
+    updateQuery += '`titleThirdMarquee` = ?';
+    updateValues.push(titleThirdMarquee);
+  }
+
+  updateQuery += ' WHERE `id-third-marquee` = ?';
+  updateValues.push(id);
+
+  dataCategory.query(updateQuery, updateValues, (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    if (results.affectedRows > 0) {
+      res.status(200).json({ message: 'third Marquee updated successfully', newPath: req.file ? req.file.filename : 'No new image uploaded', title: titleThirdMarquee });
+    } else {
+      res.status(404).send('Entry not found for update.');
+    }
   });
+});
   
 
 
@@ -178,18 +198,22 @@ router.put('/thirdmarquee/:id', upload.single('imagethirdmarquee'), (req, res) =
 
 
 const uploadtop = multer({ storage: storage });
-const multipleUploadtop = uploadtop.array('topCircleImg', 3); // Allows up to 3 images
+const uploadFields = [
+  { name: 'topCircleImg', maxCount: 3 }, // Field for multiple images
+  { name: 'singleTopCircleImg', maxCount: 1 } // Field for a single image
+];
 
-
-
-router.post('/addtopimg', multipleUploadtop, (req, res) => {
+router.post('/addtopimg', uploadtop.fields(uploadFields), (req, res) => {
   // Check if any files were uploaded
-  if (!req.files || req.files.length === 0) {
+  if ((!req.files['topCircleImg'] || req.files['topCircleImg'].length === 0) && 
+      (!req.files['singleTopCircleImg'] || req.files['singleTopCircleImg'].length === 0)) {
     return res.status(400).json({ error: 'No files uploaded' });
   }
 
+  const files = [...(req.files['topCircleImg'] || []), ...(req.files['singleTopCircleImg'] || [])];
+
   // Iterate over each file and insert into the database
-  req.files.forEach(file => {
+  files.forEach(file => {
     const imgPath = path.join('images', file.filename);
 
     dataCategory.query('INSERT INTO `top-circle-img` (`topCircleImgPath`) VALUES (?)', 
@@ -203,9 +227,20 @@ router.post('/addtopimg', multipleUploadtop, (req, res) => {
 
   // Respond once all files are processed
   return res.status(200).json({
-    message: 'Images added successfully',
+    message: 'Images added successfully',imgPath:imgPath
   });
 });
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -225,47 +260,50 @@ router.get('/topcircleimg', async (req, res) => {
 
 
 
-router.put('/topcircleimg/:id', multipleUploadtop, (req, res) => {
+
+router.get('/topcircleimg/:id', async (req, res) => {
   const id = req.params.id;
-  const updates = {};
-  const fields = [];
-  const values = [];
-  
-  if (req.files.topCircleImg1) {
-    updates['topCircleImg1Path'] = path.join('images', req.files.topCircleImg1[0].filename);
-    fields.push('`topCircleImg1Path` = ?');
-    values.push(updates['topCircleImg1Path']);
-  }
-  if (req.files.topCircleImg2) {
-    updates['topCircleImg2Path'] = path.join('images', req.files.topCircleImg2[0].filename);
-    fields.push('`topCircleImg2Path` = ?');
-    values.push(updates['topCircleImg2Path']);
-  }
-  if (req.files.topCircleImg3) {
-    updates['topCircleImg3Path'] = path.join('images', req.files.topCircleImg3[0].filename);
-    fields.push('`topCircleImg3Path` = ?');
-    values.push(updates['topCircleImg3Path']);
-  }
+  dataCategory.query('SELECT `topCircleImgPath` FROM `top-circle-img` WHERE `id-top-circle-img` = ?', [id], (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    return res.status(200).json(results);
+  });
+});
 
-  if (fields.length > 0) {
-    const sql = `UPDATE \`top-circle-img\` SET ${fields.join(', ')} WHERE \`id-top-circle-img\` = ?`;
-    values.push(id);
 
-    dataCategory.query(sql, values, (error, results) => {
-      if (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
-      }
-      return res.status(200).json({
-        message: 'Images updated successfully',
-        updatedPaths: updates
-      });
-    });
+
+
+
+router.put('/topcircleimg/:id', uploadtop.fields(uploadFields), (req, res) => {
+  const id = req.params.id;
+
+  let imgPath;
+
+  // Check if single image file was uploaded
+  if (req.files['singleTopCircleImg'] && req.files['singleTopCircleImg'].length > 0) {
+    imgPath = path.join('images', req.files['singleTopCircleImg'][0].filename);
+  } else if (req.files['topCircleImg'] && req.files['topCircleImg'].length > 0) {
+    // If no single image, check for the first image in the multiple images array
+    imgPath = path.join('images', req.files['topCircleImg'][0].filename);
   } else {
     return res.status(400).send('No images were uploaded for update.');
   }
-});
 
+  const sql = 'UPDATE `top-circle-img` SET `topCircleImgPath` = ? WHERE `id-top-circle-img` = ?';
+
+  dataCategory.query(sql, [imgPath, id], (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    return res.status(200).json({
+      message: 'Image updated successfully',
+      updatedPath: imgPath
+    });
+  });
+});
 
 
 
@@ -274,7 +312,7 @@ router.delete('/topcircleimg/:id', async (req, res) => {
   const id = req.params.id;
  
   // Get the image paths from the database
-  dataCategory.query('SELECT `topCircleImg1Path`, `topCircleImg2Path`, `topCircleImg3Path` FROM `top-circle-img` WHERE `id-top-circle-img` = ?', [id], (error, results) => {
+  dataCategory.query('SELECT `topCircleImgPath` FROM `top-circle-img` WHERE `id-top-circle-img` = ?', [id], (error, results) => {
     if (error) {
       console.error(error);
       return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -313,7 +351,7 @@ router.delete('/topcircleimg/:id', async (req, res) => {
 
 
 
-
+//bottom circle img
 
 
 
@@ -328,31 +366,39 @@ router.delete('/topcircleimg/:id', async (req, res) => {
 
 const uploadbottom = multer({ storage: storage });
 const multipleUploadbottom = uploadbottom.array('bottomCircleImg', 3); // Allows up to 3 images
-
+const uploadBottomFields = [
+  { name: 'bottomCircleImg', maxCount: 3 }, // Field for multiple images
+  { name: 'singleBottomCircleImg', maxCount: 1 } // Field for a single image
+];
 
 // Route bottom circle img upload
-router.post('/addbottomimg', multipleUploadbottom, (req, res) => {
-   // Check if any files were uploaded
-   if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ error: 'No files uploaded' });
+router.post('/addbottomimg', uploadbottom.fields(uploadBottomFields),  (req, res) => {
+
+// Check if any files were uploaded
+if ((!req.files['bottomCircleImg'] || req.files['bottomCircleImg'].length === 0) && 
+(!req.files['singleBottomCircleImg'] || req.files['singleBottomCircleImg'].length === 0)) {
+return res.status(400).json({ error: 'No files uploaded' });
+}
+
+const files = [...(req.files['bottomCircleImg'] || []), ...(req.files['singleBottomCircleImg'] || [])];
+
+// Iterate over each file and insert into the database
+files.forEach(file => {
+const imgPath = path.join('images', file.filename);
+
+dataCategory.query('INSERT INTO `bottom-circle-img` (`bottomCircleImgPath`) VALUES (?)', 
+[imgPath], (error, results) => {
+  if (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
   }
-
- // Iterate over each file and insert into the database
- req.files.forEach(file => {
-  const imgPath = path.join('images', file.filename);
-
-  dataCategory.query('INSERT INTO `bottom-circle-img` (`bottomCircleImgPath`) VALUES (?)', 
-    [imgPath], (error, results) => {
-      if (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
-      }
-  });
 });
-  // Respond once all files are processed
-  return res.status(200).json({
-    message: 'Images added successfully',
-  });
+});
+
+// Respond once all files are processed
+return res.status(200).json({
+message: 'Images added successfully',
+});
 });
   
 
@@ -372,45 +418,46 @@ router.get('/bottomcircleimg', async (req, res) => {
 
 
 
-
-
-
-
-router.put('/bottomcircleimg/:id', multipleUploadbottom, (req, res) => {
+router.get('/bottomcircleimg/:id', async (req, res) => {
   const id = req.params.id;
-  const updates = {};
-  const fields = [];
-  const values = [];
+  dataCategory.query('SELECT `bottomCircleImgPath` FROM `bottom-circle-img` WHERE `id-bottom-circle-img` = ?', [id], (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    return res.status(200).json(results);
+  });
+});
 
-  if (req.files.bottomCircleImg1) {
-    updates['bottom-circle-img1-path'] = path.join('images', req.files.bottomCircleImg1[0].filename);
-    fields.push('`bottom-circle-img1-path` = ?');
-    values.push(updates['bottom-circle-img1-path']);
-  }
-  if (req.files.bottomCircleImg2) {
-    updates['bottom-circle-img2-path'] = path.join('images', req.files.bottomCircleImg2[0].filename);
-    fields.push('`bottom-circle-img2-path` = ?');
-    values.push(updates['bottom-circle-img2-path']);
-  }
- 
 
-  if (fields.length > 0) {
-    const sql = `UPDATE \`bottom-circle-img\` SET ${fields.join(', ')} WHERE \`id-bottom-circle-img\` = ?`;
-    values.push(id);
 
-    dataCategory.query(sql, values, (error, results) => {
-      if (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
-      }
-      return res.status(200).json({
-        message: 'Images updated successfully',
-        updatedPaths: updates
-      });
-    });
+
+router.put('/bottomcircleimg/:id', uploadbottom.fields(uploadBottomFields), (req, res) => {
+  const id = req.params.id;
+  let imgPath;
+
+  // Check if single image file was uploaded
+  if (req.files['singleBottomCircleImg'] && req.files['singleBottomCircleImg'].length > 0) {
+    imgPath = path.join('images', req.files['singleBottomCircleImg'][0].filename);
+  } else if (req.files['bottomCircleImg'] && req.files['bottomCircleImg'].length > 0) {
+    // If no single image, check for the first image in the multiple images array
+    imgPath = path.join('images', req.files['bottomCircleImg'][0].filename);
   } else {
     return res.status(400).send('No images were uploaded for update.');
   }
+
+  const sql = 'UPDATE `bottom-circle-img` SET `bottomCircleImgPath` = ? WHERE `id-bottom-circle-img` = ?';
+
+  dataCategory.query(sql, [imgPath, id], (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    return res.status(200).json({
+      message: 'Image updated successfully',
+      updatedPath: imgPath
+    });
+  });
 });
 
 
@@ -423,7 +470,7 @@ router.delete('/bottomcircleimg/:id', async (req, res) => {
   const id = req.params.id;
 
   // Get the image paths from the database
-  dataCategory.query('SELECT `bottom-circle-img1-path`, `bottom-circle-img2-path` FROM `bottom-circle-img` WHERE `id-bottom-circle-img` = ?', [id], (error, results) => {
+  dataCategory.query('SELECT `bottomCircleImgPath` FROM `bottom-circle-img` WHERE `id-bottom-circle-img` = ?', [id], (error, results) => {
     if (error) {
       console.error(error);
       return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });

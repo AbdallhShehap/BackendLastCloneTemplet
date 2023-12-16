@@ -1,0 +1,14 @@
+Home screen> products border is cut from top and bottom
+Location screen after adding a product> the next button and add new address should be the same size.
+When I added a product> the application went to a screen asked me for name and phone number, when I added them it should get me to location screen, but instead it went to home screen.
+When I added a product again> added my location, body mesurements, and choosen the tailor> the app showed the video> After wards when it got me to capture screen> When I pressed on open camera> it got me to the screen that contains nae and phone number, when I pressed on next and entered otp, it got me back to home screen again and changed the application language to english i dont know why.
+When I added a product> went to location screen> when I pressed on add new location, added the details of the new location and pressed save nothing happened.
+Order History> When pressing on view details of a certain orders> the order placed status description isnt the same as the iOS, same as delivering status and delivered status.
+My Addresses> When entering My Addresses, its title is wrong, also when removing an address from it, address does get deleted but it doesnt reflct directly on the page untill leaving the page and goig back to it.
+My Addresses> Add another address on iOS opens a map page to select address on map, android doesnt, also adding new address isnt working.
+My Addresses> Change address on iOS opens a map page to select address on map, android doesnt.
+Settings> Language> pressing on it moves the switch, even when pressing cancel when the dialog shows up.
+Cart> adding quantity doesnt change price values, also the minus button color stays as light purple, even when increasing quantity with the plus button.
+Cart> Pressing on place order shows an error, and tailor name isnt showing in cart.
+Body measurements> not same as iOS and has a radio button for no reason (Images attached).
+Vouchers> vouchers data on android is different than iOS (Images attached).

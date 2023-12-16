@@ -33,25 +33,195 @@ const multer = require('multer');
 const path = require('path');
 const dataCategory = require('../Module/allData'); // Make sure this is the correct path to your database module
 
+
+
+
+
+// Icon for Main section 
+
+
+
 // Multer configuration
 const storage = multer.diskStorage({
-    destination: function(req, file, cb) {
-      cb(null, path.join(__dirname, '..', 'images'));
-    },
-    filename: function(req, file, cb) {
-        // Prepend the current timestamp to the original file name
-        const uniquePrefix = Date.now() + '-';
-        cb(null, uniquePrefix + file.originalname);
+  destination: function(req, file, cb) {
+    cb(null, path.join(__dirname, '..', 'images'));
+  },
+  filename: function(req, file, cb) {
+      // Prepend the current timestamp to the original file name
+      const uniquePrefix = Date.now() + '-';
+      cb(null, uniquePrefix + file.originalname);
+    }
+    
+});
+
+const upload = multer({ storage: storage });
+
+
+router.post('/addiconmainsection', upload.single('iconmainsection'), (req, res) => {
+   // Get the title from the request body, could be undefined
+  let imagePath = req.file ? path.join('images', req.file.filename) : null; // Set imagePath only if a file was uploaded
+  
+  // Construct the SQL query dynamically based on what data is provided
+  let sql = 'INSERT INTO `main-section-Icon` (';
+  let placeholders = [];
+  let values = [];
+  
+
+
+
+  if (imagePath) {
+    sql += (values.length > 0 ? ', ' : '') +  '`icon`';
+    placeholders.push('?');
+    values.push(imagePath);
+  }
+
+
+  
+  
+  if (placeholders.length === 0) {
+    return res.status(400).send('No data provided.');
+  }
+
+  sql += ') VALUES (' + placeholders.join(', ') + ')';
+
+  // Execute the SQL query with the values
+  dataCategory.query(sql, values, (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    return res.status(200).json({ message: 'Main Section icon added successfully', path: imagePath});
+  });
+});
+
+
+
+
+
+  // Route to retrieve 
+  router.get('/iconmainsection', async (req, res) => {
+    
+  
+    dataCategory.query('SELECT * FROM `main-section-Icon`', (error, results) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
-      
+      if (results.length > 0) {
+        res.status(200).json(results);
+      } else {
+        res.status(404).send('Entry not found.');
+      }
+    });
   });
   
-  const upload = multer({ storage: storage });
 
 
-  router.post('/addtextimgmainsection', upload.single('iconmainsection'), (req, res) => {
+
+
+ // Route to retrieve a specific entry by ID
+ router.get('/iconmainsection/:id', async (req, res) => {
+  const id = req.params.id;
+
+  dataCategory.query('SELECT * FROM `main-section-Icon` WHERE `id` = ?', [id], (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    if (results.length > 0) {
+      res.status(200).json(results[0]);
+    } else {
+      res.status(404).send('Entry not found.');
+    }
+  });
+});
+
+
+
+
+// Route to update an entry by ID
+router.put('/iconmainsection/:id', upload.single('iconmainsection'), (req, res) => {
+  const id = req.params.id;
+  const newImagePath = req.file ? path.join('images', req.file.filename) : undefined;
+
+  // Update the database entry
+  dataCategory.query('UPDATE `main-section-Icon` SET `icon` = ? WHERE `id` = ?', [newImagePath, id], (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    if (results.affectedRows > 0) {
+      res.status(200).json({ message: 'icon main section updated successfully', newPath: newImagePath });
+    } else {
+      res.status(404).send('Entry not found for update.');
+    }
+  });
+});
+
+
+
+
+const fs = require('fs');
+
+router.delete('/iconmainsection/:id', async (req, res) => {
+  const id = req.params.id;
+
+  // Get the current image path from the database
+  dataCategory.query('SELECT `icon` FROM `main-section-Icon` WHERE `id` = ?', [id], (error, results) => {
+      if (error) {
+          console.error(error);
+          return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+      }
+
+      if (results.length === 0) {
+          return res.status(404).send('Entry not found.');
+      }
+
+      const imagePath = results[0]['icon'];
+
+      // Function to delete the database record
+      const deleteRecord = () => {
+          dataCategory.query('DELETE FROM `main-section-Icon` WHERE `id` = ?', [id], (error) => {
+              if (error) {
+                  console.error(error);
+                  return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+              }
+              res.status(200).json({ message: 'icon main section deleted successfully' });
+          });
+      };
+
+      // If there's an image path, try to delete the image file
+      if (imagePath) {
+          fs.unlink(path.join(__dirname, '..', imagePath), (err) => {
+              if (err) {
+                  console.error(err);
+                  // Even if image deletion fails, proceed to delete database record
+              }
+              // Proceed to delete the database record whether or not the image file was successfully deleted
+              deleteRecord();
+          });
+      } else {
+          // If there is no image path, just delete the database record
+          deleteRecord();
+      }
+  });
+});
+
+
+
+
+
+
+
+
+//text's for Main section 
+
+
+
+
+
+  router.post('/addtextmainsection', (req, res) => {
     const {text1,	text2,	text3,	paragraph,	buttonName,	buttonLink} = req.body; // Get the title from the request body, could be undefined
-    let imagePath = req.file ? path.join('images', req.file.filename) : null; // Set imagePath only if a file was uploaded
     
     // Construct the SQL query dynamically based on what data is provided
     let sql = 'INSERT INTO `main-section` (';
@@ -71,11 +241,6 @@ const storage = multer.diskStorage({
     }
 
 
-    if (imagePath) {
-      sql += (values.length > 0 ? ', ' : '') +  '`icon`';
-      placeholders.push('?');
-      values.push(imagePath);
-    }
 
     if (text3) {
       sql += (values.length > 0 ? ', ' : '') +  '`text3`';
@@ -130,8 +295,17 @@ const storage = multer.diskStorage({
   
 
 
+
+  
+
+
+
+
+
+
+
   // Route to retrieve 
-  router.get('/textimgmainsection', async (req, res) => {
+  router.get('/textmainsection', async (req, res) => {
     
   
     dataCategory.query('SELECT * FROM `main-section`', (error, results) => {
@@ -151,7 +325,7 @@ const storage = multer.diskStorage({
 
 
   // Route to retrieve a specific entry by ID
-router.get('/textimgmainsection/:id', async (req, res) => {
+router.get('/textmainsection/:id', async (req, res) => {
     const id = req.params.id;
   
     dataCategory.query('SELECT * FROM `main-section` WHERE `id` = ?', [id], (error, results) => {
@@ -169,19 +343,18 @@ router.get('/textimgmainsection/:id', async (req, res) => {
   
 
 // Route to update an entry by ID
-router.put('/textimgmainsection/:id', upload.single('iconmainsection'), (req, res) => {
+router.put('/textmainsection/:id', (req, res) => {
     const id = req.params.id;
     const { text1,	text2,	text3,	paragraph,	buttonName,	buttonLink } = req.body; // Get the title from the request body
-    const newImagePath = req.file ? path.join('images', req.file.filename) : undefined;
   
     // Update the database entry
-    dataCategory.query('UPDATE `main-section` SET `text1` = ?, `text2` = ?, `icon` = ?, `text3` = ?, `paragraph` = ?, `buttonName` = ?, `buttonLink` = ? WHERE `id` = ?', [text1,text2, newImagePath, text3,	paragraph,	buttonName,	buttonLink , id], (error, results) => {
+    dataCategory.query('UPDATE `main-section` SET `text1` = ?, `text2` = ?, `text3` = ?, `paragraph` = ?, `buttonName` = ?, `buttonLink` = ? WHERE `id` = ?', [text1,text2, text3,	paragraph,	buttonName,	buttonLink , id], (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
       if (results.affectedRows > 0) {
-        res.status(200).json({ message: 'secound main section updated successfully', newPath: newImagePath, title: text1 });
+        res.status(200).json({ message: 'secound main section updated successfully', title: text1 });
       } else {
         res.status(404).send('Entry not found for update.');
       }
@@ -190,49 +363,16 @@ router.put('/textimgmainsection/:id', upload.single('iconmainsection'), (req, re
   
 
 
-  const fs = require('fs');
 
-  router.delete('/textimgmainsection/:id', async (req, res) => {
+
+  router.delete('/textmainsection/:id', async (req, res) => {
     const id = req.params.id;
-  
-    // Get the current image path from the database
-    dataCategory.query('SELECT `icon` FROM `main-section` WHERE `id` = ?', [id], (error, results) => {
-        if (error) {
-            console.error(error);
-            return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
-        }
-
-        if (results.length === 0) {
-            return res.status(404).send('Entry not found.');
-        }
-
-        const imagePath = results[0]['icon'];
-  
-        // Function to delete the database record
-        const deleteRecord = () => {
-            dataCategory.query('DELETE FROM `main-section` WHERE `id` = ?', [id], (error) => {
-                if (error) {
-                    console.error(error);
-                    return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
-                }
-                res.status(200).json({ message: 'main section deleted successfully' });
-            });
-        };
-  
-        // If there's an image path, try to delete the image file
-        if (imagePath) {
-            fs.unlink(path.join(__dirname, '..', imagePath), (err) => {
-                if (err) {
-                    console.error(err);
-                    // Even if image deletion fails, proceed to delete database record
-                }
-                // Proceed to delete the database record whether or not the image file was successfully deleted
-                deleteRecord();
-            });
-        } else {
-            // If there is no image path, just delete the database record
-            deleteRecord();
-        }
+    dataCategory.query('DELETE FROM `main-section` WHERE `id` = ?', [id], (error, results) => {
+      if (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+      } else {
+        res.status(200).json({ message: '`main section` content deleted successfully' });
+      }
     });
 });
 

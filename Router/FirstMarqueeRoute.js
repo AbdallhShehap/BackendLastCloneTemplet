@@ -24,7 +24,10 @@ const storage = multer.diskStorage({
 
 
   router.post('/add', upload.single('imagefirstmarquee'), (req, res) => {
-    const { titlefirstmarquee } = req.body; // Get the title from the request body, could be undefined
+    console.log("req.body:", req.body);
+    console.log("req.file:", req.file);
+    
+    const { titleFirstMarquee } = req.body; // Get the title from the request body, could be undefined
     let imagePath = req.file ? path.join('images', req.file.filename) : null; // Set imagePath only if a file was uploaded
     
     // Construct the SQL query dynamically based on what data is provided
@@ -37,16 +40,16 @@ const storage = multer.diskStorage({
       placeholders.push('?');
       values.push(imagePath);
     
-      if (titlefirstmarquee) {
+      if (titleFirstMarquee) {
         sql += ', '; // Add a comma only if there was also an image
       }
     }
 
 
-  if (titlefirstmarquee) {
-  sql += '`title-first-marquee`';
+  if (titleFirstMarquee) {
+  sql += '`titleFirstMarquee`';
   placeholders.push('?');
-  values.push(titlefirstmarquee);
+  values.push(titleFirstMarquee);
 }
     
     if (placeholders.length === 0) {
@@ -61,7 +64,7 @@ const storage = multer.diskStorage({
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
-      return res.status(200).json({ message: 'First Marquee added successfully', path: imagePath, title: titlefirstmarquee });
+      return res.status(200).json({ message: 'First Marquee added successfully', path: imagePath, title: titleFirstMarquee });
     });
   });
   
@@ -91,7 +94,7 @@ const storage = multer.diskStorage({
 router.get('/firstmarquee/:id', async (req, res) => {
     const id = req.params.id;
   
-    dataCategory.query('SELECT `image-first-marquee-path`, `title-first-marquee` FROM firstmarquee WHERE `id-first-marquee` = ?', [id], (error, results) => {
+    dataCategory.query('SELECT `imageFirstMarqueePath`, `titleFirstMarquee` FROM firstmarquee WHERE `id-first-marquee` = ?', [id], (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -105,20 +108,37 @@ router.get('/firstmarquee/:id', async (req, res) => {
   });
   
 
-// Route to update an entry by ID
-router.put('/firstmarquee/:id', upload.single('imagefirstmarquee'), (req, res) => {
+  router.put('/firstmarquee/:id', upload.single('imagefirstmarquee'), (req, res) => {
     const id = req.params.id;
-    const { titlefirstmarquee } = req.body; // Get the title from the request body
-    const newImagePath = req.file ? path.join('images', req.file.filename) : undefined;
+    const { titleFirstMarquee } = req.body;
   
-    // Update the database entry
-    dataCategory.query('UPDATE firstmarquee SET `image-first-marquee-path` = ?, `title-first-marquee` = ? WHERE `id-first-marquee` = ?', [newImagePath, titlefirstmarquee, id], (error, results) => {
+    let updateQuery = 'UPDATE firstmarquee SET ';
+    let updateValues = [];
+    
+    if (req.file) {
+      const newImagePath = path.join('images', req.file.filename);
+      updateQuery += '`imageFirstMarqueePath` = ?';
+      updateValues.push(newImagePath);
+    }
+  
+    if (titleFirstMarquee) {
+      if (updateValues.length > 0) {
+        updateQuery += ', ';
+      }
+      updateQuery += '`titleFirstMarquee` = ?';
+      updateValues.push(titleFirstMarquee);
+    }
+  
+    updateQuery += ' WHERE `id-first-marquee` = ?';
+    updateValues.push(id);
+  
+    dataCategory.query(updateQuery, updateValues, (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
       if (results.affectedRows > 0) {
-        res.status(200).json({ message: 'First Marquee updated successfully', newPath: newImagePath, title: titlefirstmarquee });
+        res.status(200).json({ message: 'First Marquee updated successfully', newPath: req.file ? req.file.filename : 'No new image uploaded', title: titleFirstMarquee });
       } else {
         res.status(404).send('Entry not found for update.');
       }
@@ -133,7 +153,7 @@ router.put('/firstmarquee/:id', upload.single('imagefirstmarquee'), (req, res) =
     const id = req.params.id;
   
     // Get the current image path from the database
-    dataCategory.query('SELECT `image-first-marquee-path` FROM firstmarquee WHERE `id-first-marquee` = ?', [id], (error, results) => {
+    dataCategory.query('SELECT `imageFirstMarqueePath` FROM firstmarquee WHERE `id-first-marquee` = ?', [id], (error, results) => {
         if (error) {
             console.error(error);
             return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -143,7 +163,7 @@ router.put('/firstmarquee/:id', upload.single('imagefirstmarquee'), (req, res) =
             return res.status(404).send('Entry not found.');
         }
 
-        const imagePath = results[0]['image-first-marquee-path'];
+        const imagePath = results[0]['imageFirstMarqueePath	'];
   
         // Function to delete the database record
         const deleteRecord = () => {

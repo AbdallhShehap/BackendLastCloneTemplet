@@ -198,7 +198,22 @@ const storage = multer.diskStorage({
 
 
 
+  const OfferController =require('../Controller/NewsFixedController')
 
+  router.post('/addfixednews', OfferController.addFixedNews);
+  
+  // GET request to retrieve all Offer
+  router.get('/datafixednews', OfferController.getFixedNewss);
+  
+  // GET request to retrieve a single Offer by id
+  router.get('/datafixednews/:id', OfferController.getFixedNewsById);
+  
+  // PUT request to update a Offer by id
+  router.put('/datafixednews/:id', OfferController.updateFixedNews);
+  
+  // DELETE request to delete a Offer by id
+  router.delete('/datafixednews/:id', OfferController.deleteFixedNews);
+  
 
 
 

@@ -28,19 +28,19 @@ router.delete('/ourbenfitscontent/:id', OurBenfitsController.deleteOurBenfitsCon
 // title our benfits
 
 
-router.post('/add', OurBenfitsController.addOurBenfits);
+// router.post('/add', OurBenfitsController.addOurBenfits);
 
-// GET request to retrieve all sidemenus
-router.get('/ourbenfits', OurBenfitsController.getOurBenfits);
+// // GET request to retrieve all sidemenus
+// router.get('/ourbenfits', OurBenfitsController.getOurBenfits);
 
-// GET request to retrieve a single sidemenu by id
-router.get('/ourbenfits/:id', OurBenfitsController.getOurBenfitsById);
+// // GET request to retrieve a single sidemenu by id
+// router.get('/ourbenfits/:id', OurBenfitsController.getOurBenfitsById);
 
-// PUT request to update a sidemenu by id
-router.put('/ourbenfits/:id', OurBenfitsController.updateOurBenfits);
+// // PUT request to update a sidemenu by id
+// router.put('/ourbenfits/:id', OurBenfitsController.updateOurBenfits);
 
-// DELETE request to delete a sidemenu by id
-router.delete('/ourbenfits/:id', OurBenfitsController.deleteOurBenfits);
+// // DELETE request to delete a sidemenu by id
+// router.delete('/ourbenfits/:id', OurBenfitsController.deleteOurBenfits);
 
 
 
@@ -77,7 +77,7 @@ const storage = multer.diskStorage({
 
     let imagePath = req.file ? path.join('images', req.file.filename) : null; // Set imagePath only if a file was uploaded
     
-    let sql = 'INSERT INTO ourbenefits (';
+    let sql = 'INSERT INTO `imgourbenefits` (';
     let placeholders = [];
     let values = [];
     
@@ -128,7 +128,7 @@ const storage = multer.diskStorage({
   router.get('/imgourbenefits', async (req, res) => {
  
   
-    dataCategory.query('SELECT * FROM ourbenefits',  (error, results) => {
+    dataCategory.query('SELECT * FROM `imgourbenefits`',  (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -143,10 +143,12 @@ const storage = multer.diskStorage({
   
 
 
+
+
   router.get('/imgourbenefits/:id', async (req, res) => {
     const id = req.params.id;
   
-    dataCategory.query('SELECT `imgSection` FROM ourbenefits WHERE `id` = ?', [id], (error, results) => {
+    dataCategory.query('SELECT `imgSection` FROM `imgourbenefits` WHERE `id` = ?', [id], (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -168,13 +170,17 @@ const storage = multer.diskStorage({
 
   router.put('/imgourbenefits/:id', upload.single('imgourbenefits'), (req, res) => {
     const id = req.params.id;
-    const {  sectionTitile, sectionSubtitile } = req.body;
   
- 
-    const newImagePath = path.join('images', req.file.filename);
+    let newImagePath;
+    if (req.file) {
+      newImagePath = path.join('images', req.file.filename);
+    } else {
+      // Handle the case where no file is uploaded, e.g., image deletion
+      newImagePath = ''; // Or set to some default value if necessary
+    }
   
     // Update the database with the new image path
-    dataCategory.query('UPDATE ourbenefits SET `imgSection` = ? , `sectionTitile` = ?  , `sectionSubtitile` = ? WHERE `id` = ?', [newImagePath, sectionTitile, sectionSubtitile, id], (error, results) => {
+    dataCategory.query('UPDATE  `imgourbenefits` SET `imgSection` = ?  WHERE `id` = ?', [newImagePath, id], (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -186,7 +192,7 @@ const storage = multer.diskStorage({
       }
     });
   });
-  
+
 
 
 
@@ -229,6 +235,124 @@ const storage = multer.diskStorage({
 
 
 
+
+
+
+
+
+  router.post('/addtextourbenefits', (req, res) => {
+    const { sectionTitile, sectionSubtitile } = req.body;
+  
+    let sql = 'INSERT INTO `ourbenefits` (';
+    let placeholders = [];
+    let values = [];
+  
+    if (sectionTitile) {
+      sql += '`sectionTitile`';
+      placeholders.push('?');
+      values.push(sectionTitile);
+    }
+  
+    if (sectionSubtitile) {
+      // Add a comma if there is already a column listed
+      if (values.length > 0) {
+        sql += ', ';
+      }
+      sql += '`sectionSubtitile`';
+      placeholders.push('?');
+      values.push(sectionSubtitile);
+    }
+  
+    if (placeholders.length === 0) {
+      return res.status(400).send('No data provided.');
+    }
+  
+    sql += ') VALUES (' + placeholders.join(', ') + ')';
+  
+    // Execute the SQL query with the values
+    dataCategory.query(sql, values, (error, results) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+      }
+      return res.status(200).json({ message: 'Our Benfits added successfully', title: sectionTitile });
+    });
+  });
+  
+
+  
+  router.get('/textourbenefits', async (req, res) => {
+ 
+  
+    dataCategory.query('SELECT * FROM `ourbenefits`',  (error, results) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+      }
+      if (results.length > 0) {
+        res.status(200).json(results);
+      } else {
+        res.status(404).send('Entry not found.');
+      }
+    });
+  });
+  
+
+
+
+
+  router.get('/textourbenefits/:id', async (req, res) => {
+    const id = req.params.id;
+    dataCategory.query('SELECT * FROM `ourbenefits` WHERE `id` = ?', [id], (error, results) => {
+      if (error) {
+        console.error(error); // Log the error to the console for debugging.
+        res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+      } else {
+        if (results.length > 0) {
+          res.status(200).json(results[0]);
+        } else {
+          res.status(404).json({ message: 'Our Benfits not found' }); // If no results are found.
+        }
+      }
+    });
+  });
+  
+
+
+
+  router.put('/textourbenefits/:id',  (req, res) => {
+    const id = req.params.id;
+    const {  sectionTitile, sectionSubtitile } = req.body;
+  
+ 
+  
+    // Update the database with the new image path
+    dataCategory.query('UPDATE ourbenefits SET `sectionTitile` = ?  , `sectionSubtitile` = ? WHERE `id` = ?', [ sectionTitile, sectionSubtitile, id], (error, results) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+      }
+      if (results.affectedRows > 0) {
+        res.status(200).json({ message: 'Image updated successfully' });
+      } else {
+        res.status(404).send('Image not found for update.');
+      }
+    });
+  });
+  
+
+
+
+  router.delete('/textourbenefits/:id', async (req, res) => {
+    const id = req.params.id;
+    dataCategory.query('DELETE FROM ourbenefits WHERE `id` = ?', [id], (error, results) => {
+      if (error) {
+        res.status(500).json({ error: 'Internal Server Error' });
+      } else {
+        res.status(200).json({ message: 'our benefits ixed deleted successfully' });
+      }
+    });
+  })
 
 
 

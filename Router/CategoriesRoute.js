@@ -41,7 +41,7 @@ router.post('/addcategory', upload.single('imagecategory'), (req, res) => {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
-      return res.status(200).json({ message: 'Categories added successfully' });
+      return res.status(200).json({ message: 'Categories added successfully' , category:category });
     });
   });
   
@@ -85,7 +85,6 @@ router.get('/categories/:id', async (req, res) => {
 
 
 
-
 router.put('/categories/:id', upload.single('imagecategory'), (req, res) => {
   const id = req.params.id;
   let sql = 'UPDATE `categories` SET ';
@@ -95,7 +94,12 @@ router.put('/categories/:id', upload.single('imagecategory'), (req, res) => {
     const imagePath = path.join('images', req.file.filename);
     sql += '`imageCategoryPath` = ?, ';
     values.push(imagePath);
+  } else if (req.body.existingImagePath) {
+    // Handle existing image path (perhaps verify or process it as needed)
+    sql += '`imageCategoryPath` = ?, ';
+    values.push(req.body.existingImagePath);
   }
+
   if (req.body.toptext) {
     sql += '`toptext` = ?, ';
     values.push(req.body.toptext);

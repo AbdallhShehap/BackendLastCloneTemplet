@@ -78,7 +78,18 @@ const storage = multer.diskStorage({
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
-      return res.status(200).json({ message: 'Our Benfits added successfully', path: imagePath, title: name });
+      // Retrieve the ID of the newly inserted review
+      const newReviewId = results.insertId;
+
+      // You might want to retrieve the full review data here
+      // For simplicity, we're only returning the ID
+      return res.status(200).json({ 
+          message: 'Review added successfully', 
+          id: newReviewId, // Include the new review ID in the response
+          imagePath: imagePath,
+          name: name,
+          job: job,
+          content: content });
     });
   });
   
@@ -130,8 +141,11 @@ const storage = multer.diskStorage({
     const id = req.params.id;
     const { name, job, content} = req.body;
   
- 
-    const newImagePath = path.join('images', req.file.filename);
+    let newImagePath;
+    if (req.file) {
+      newImagePath = path.join('images', req.file.filename);
+    }
+  
   
     // Update the database with the new image path
     dataCategory.query('UPDATE reviews SET `image` = ? , `name` = ?  , `job` = ? , `content` = ? WHERE `id` = ?', [newImagePath,  name, job, content, id], (error, results) => {

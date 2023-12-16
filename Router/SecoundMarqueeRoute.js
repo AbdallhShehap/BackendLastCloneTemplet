@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
 
 
   router.post('/add', upload.single('imagesecoundmarquee'), (req, res) => {
-    const {titlesecoundmarquee } = req.body; // Get the title from the request body, could be undefined
+    const {titleSecoundMarquee } = req.body; // Get the title from the request body, could be undefined
     let imagePath = req.file ? path.join('images', req.file.filename) : null; // Set imagePath only if a file was uploaded
     
     // Construct the SQL query dynamically based on what data is provided
@@ -38,11 +38,11 @@ const storage = multer.diskStorage({
       values.push(imagePath);
     }
   
-    if (titlesecoundmarquee) {
+    if (titleSecoundMarquee) {
       if (imagePath) sql += ', '; // Add a comma only if there was also an image
-      sql += '`title-secound-marquee`';
+      sql += '`titleSecoundMarquee`';
       placeholders.push('?');
-      values.push(titlesecoundmarquee);
+      values.push(titleSecoundMarquee);
     }
     
     if (placeholders.length === 0) {
@@ -57,7 +57,7 @@ const storage = multer.diskStorage({
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
-      return res.status(200).json({ message: 'secound Marquee added successfully', path: imagePath, title: titlesecoundmarquee });
+      return res.status(200).json({ message: 'secound Marquee added successfully', path: imagePath, title: titleSecoundMarquee });
     });
   });
   
@@ -87,7 +87,7 @@ const storage = multer.diskStorage({
 router.get('/secoundmarquee/:id', async (req, res) => {
     const id = req.params.id;
   
-    dataCategory.query('SELECT `imageSecoundMarqueePath`, `title-secound-marquee` FROM secoundmarquee WHERE `id-secound-marquee` = ?', [id], (error, results) => {
+    dataCategory.query('SELECT `imageSecoundMarqueePath`, `titleSecoundMarquee` FROM secoundmarquee WHERE `id-secound-marquee` = ?', [id], (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
@@ -103,24 +103,44 @@ router.get('/secoundmarquee/:id', async (req, res) => {
 
 // Route to update an entry by ID
 router.put('/secoundmarquee/:id', upload.single('imagesecoundmarquee'), (req, res) => {
+
     const id = req.params.id;
-    const { titlesecoundmarquee } = req.body; // Get the title from the request body
-    const newImagePath = req.file ? path.join('images', req.file.filename) : undefined;
+    const { titleSecoundMarquee } = req.body;
   
-    // Update the database entry
-    dataCategory.query('UPDATE secoundmarquee SET `imageSecoundMarqueePath` = ?, `title-secound-marquee` = ? WHERE `id-secound-marquee` = ?', [newImagePath, titlesecoundmarquee, id], (error, results) => {
+    let updateQuery = 'UPDATE secoundmarquee SET ';
+    let updateValues = [];
+    
+    if (req.file) {
+      const newImagePath = path.join('images', req.file.filename);
+      updateQuery += '`imageSecoundMarqueePath` = ?';
+      updateValues.push(newImagePath);
+    }
+  
+    if (titleSecoundMarquee) {
+      if (updateValues.length > 0) {
+        updateQuery += ', ';
+      }
+      updateQuery += '`titleSecoundMarquee` = ?';
+      updateValues.push(titleSecoundMarquee);
+    }
+  
+    updateQuery += ' WHERE `id-secound-marquee` = ?';
+    updateValues.push(id);
+  
+    dataCategory.query(updateQuery, updateValues, (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
       if (results.affectedRows > 0) {
-        res.status(200).json({ message: 'secound Marquee updated successfully', newPath: newImagePath, title: titlesecoundmarquee });
+        res.status(200).json({ message: 'secound Marquee updated successfully', newPath: req.file ? req.file.filename : 'No new image uploaded', title: titleSecoundMarquee });
       } else {
         res.status(404).send('Entry not found for update.');
       }
     });
   });
   
+
 
 
   const fs = require('fs');
@@ -174,3 +194,19 @@ router.put('/secoundmarquee/:id', upload.single('imagesecoundmarquee'), (req, re
 
 
 module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

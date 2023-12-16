@@ -20,43 +20,55 @@ const storage = multer.diskStorage({
   });
   
   const upload = multer({ storage: storage });
+
+
+
+router.post('/addreviewsicon', upload.single('iconunderreviews'), (req, res) => {
+  console.log("req.body:", req.body);
+  console.log("req.file:", req.file);
   
-  // Route to handle file upload
-  router.post('/addreviewsicon', upload.single('iconunderreviews'), (req, res) => {
-
-   
-
-    let imagePath =  path.join('images', req.file.filename) ; // Set imagePath only if a file was uploaded
-    
-    let sql = 'INSERT INTO `icones-under-reviews` (';
-    let placeholders = [];
-    let values = [];
-
-    if (imagePath) {
-        sql += '`icon`';
-        placeholders.push('?');
-        values.push(imagePath); // Fixed: Use imagePath instead of image
-      }
-
-    if (placeholders.length === 0) {
-      return res.status(400).send('No data provided.');
+  const { name } = req.body; // Get the title from the request body, could be undefined
+  let imagePath = req.file ? path.join('images', req.file.filename) : null; // Set imagePath only if a file was uploaded
+  
+  // Construct the SQL query dynamically based on what data is provided
+  let sql = 'INSERT INTO `icones-under-reviews` (';
+  let placeholders = [];
+  let values = [];
+  
+  if (imagePath) {
+    sql += '`icon`';
+    placeholders.push('?');
+    values.push(imagePath);
+  
+    if (name) {
+      sql += ', '; // Add a comma only if there was also an image
     }
+  }
+
+
+if (name) {
+sql += '`name`';
+placeholders.push('?');
+values.push(name);
+}
   
-    sql += ') VALUES (' + placeholders.join(', ') + ')';
+  if (placeholders.length === 0) {
+    return res.status(400).send('No data provided.');
+  }
 
+  sql += ') VALUES (' + placeholders.join(', ') + ')';
 
-
-    
-    // Execute the SQL query with the values
-    dataCategory.query(sql, values, (error, results) => {
-      if (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
-      }
-      return res.status(200).json({ message: 'Our Benfits added successfully', path: imagePath });
-    });
+  // Execute the SQL query with the values
+  dataCategory.query(sql, values, (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    return res.status(200).json({ message: 'First Marquee added successfully', icon: imagePath, name: name });
   });
-  
+});
+
+
 
 
 
@@ -101,27 +113,52 @@ const storage = multer.diskStorage({
 
 
 
-  router.put('/reviewsicon/:id', upload.single('iconunderreviews'), (req, res) => {
-    const id = req.params.id;
-    
+
+
+
+router.put('/reviewsicon/:id', upload.single('iconunderreviews'), (req, res) => {
+  const id = req.params.id;
+  const { name } = req.body;
+
+  let updateQuery = 'UPDATE `icones-under-reviews` SET ';
+  let updateValues = [];
   
- 
+  if (req.file) {
     const newImagePath = path.join('images', req.file.filename);
-  
-    // Update the database with the new image path
-    dataCategory.query('UPDATE `icones-under-reviews` SET `icon` = ? WHERE `id` = ?', [newImagePath, id], (error, results) => {
-      if (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
-      }
-      if (results.affectedRows > 0) {
-        res.status(200).json({ message: 'Icon updated successfully', newPath: newImagePath });
-      } else {
-        res.status(404).send('Icon not found for update.');
-      }
-    });
+    updateQuery += '`icon` = ?';
+    updateValues.push(newImagePath);
+  }
+
+  if (name) {
+    if (updateValues.length > 0) {
+      updateQuery += ', ';
+    }
+    updateQuery += '`name` = ?';
+    updateValues.push(name);
+  }
+
+  updateQuery += ' WHERE `id` = ?';
+  updateValues.push(id);
+
+  dataCategory.query(updateQuery, updateValues, (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    if (results.affectedRows > 0) {
+      res.status(200).json({ message: 'icon under reviwes updated successfully', newPath: req.file ? req.file.filename : 'No new image uploaded', name: name });
+    } else {
+      res.status(404).send('Entry not found for update.');
+    }
   });
-  
+});
+
+
+
+
+
+
+
 
 
 

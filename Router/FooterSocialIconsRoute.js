@@ -24,10 +24,9 @@ const storage = multer.diskStorage({
 
 
   router.post('/addsocialiconfooter', upload.single('socialiconfooter'), (req, res) => {
-    const { link } = req.body; // Get the title from the request body, could be undefined
-    let imagePath = req.file ? path.join('images', req.file.filename) : null; // Set imagePath only if a file was uploaded
-    
-    // Construct the SQL query dynamically based on what data is provided
+    const { link, name } = req.body;
+    let imagePath = req.file ? path.join('images', req.file.filename) : null;
+
     let sql = 'INSERT INTO `social-icon-footer` (';
     let placeholders = [];
     let values = [];
@@ -36,35 +35,37 @@ const storage = multer.diskStorage({
       sql += '`icon`';
       placeholders.push('?');
       values.push(imagePath);
-    
-      if (link) {
-        sql += ', '; // Add a comma only if there was also an image
-      }
     }
 
+    if (link) {
+      if (imagePath) sql += ', '; // Add comma if there was an image
+      sql += '`link`';
+      placeholders.push('?');
+      values.push(link);
+    }
 
-  if (link) {
-  sql += '`link`';
-  placeholders.push('?');
-  values.push(link);
-}
+    if (name) {
+      if (imagePath || link) sql += ', '; // Add comma if there was an image or link
+      sql += '`name`';
+      placeholders.push('?');
+      values.push(name);
+    }
     
     if (placeholders.length === 0) {
       return res.status(400).send('No data provided.');
     }
-  
+
     sql += ') VALUES (' + placeholders.join(', ') + ')';
-  
-    // Execute the SQL query with the values
+
     dataCategory.query(sql, values, (error, results) => {
       if (error) {
         console.error(error);
         return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
       }
-      return res.status(200).json({ message: 'social icon added successfully', path: imagePath, title: link });
+      return res.status(200).json({ message: 'Social icon added successfully', path: imagePath, title: link });
     });
-  });
-  
+});
+
 
 
   // Route to retrieve 
@@ -107,24 +108,49 @@ router.get('/socialiconfooter/:id', async (req, res) => {
 
 // Route to update an entry by ID
 router.put('/socialiconfooter/:id', upload.single('socialiconfooter'), (req, res) => {
-    const id = req.params.id;
-    const { link } = req.body; // Get the title from the request body
-    const newImagePath = req.file ? path.join('images', req.file.filename) : undefined;
+  const id = req.params.id;
+  const { link, name  } = req.body;
+
+  let updateQuery = 'UPDATE `social-icon-footer` SET ';
+  let updateValues = [];
   
-    // Update the database entry
-    dataCategory.query('UPDATE `social-icon-footer` SET `icon` = ?, `link` = ? WHERE `id` = ?', [newImagePath, link, id], (error, results) => {
-      if (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
-      }
-      if (results.affectedRows > 0) {
-        res.status(200).json({ message: 'Details updated successfully', newPath: newImagePath, title: link });
-      } else {
-        res.status(404).send('Entry not found for update.');
-      }
-    });
+  if (req.file) {
+    const newImagePath = path.join('images', req.file.filename);
+    updateQuery += '`icon` = ?';
+    updateValues.push(newImagePath);
+  }
+
+  if (name) {
+    if (updateValues.length > 0) {
+      updateQuery += ', ';
+    }
+    updateQuery += '`name` = ?';
+    updateValues.push(name);
+  }
+
+  if (link) {
+    if (updateValues.length > 0) {
+      updateQuery += ', ';
+    }
+    updateQuery += '`link` = ?';
+    updateValues.push(link);
+  }
+
+  updateQuery += ' WHERE `id` = ?';
+  updateValues.push(id);
+
+  dataCategory.query(updateQuery, updateValues, (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+    }
+    if (results.affectedRows > 0) {
+      res.status(200).json({ message: 'icon footer updated successfully', newPath: req.file ? req.file.filename : 'No new image uploaded', name: name });
+    } else {
+      res.status(404).send('Entry not found for update.');
+    }
   });
-  
+});
 
 
   const fs = require('fs');

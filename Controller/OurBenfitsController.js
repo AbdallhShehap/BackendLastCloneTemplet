@@ -1,22 +1,38 @@
 const dataCategory = require("../Module/allData"); 
 
-
 const addOurBenfitsContent = async (req, res) => {
-    const { title, content } = req.body;
+  const { title, content } = req.body;
 
-    dataCategory.query(
-        'INSERT INTO  ourbenefitscontent (`title`, `content`) VALUES (?,?)',
-        [ title, content],
-        (error, results) => { // Changed 'res' to 'results' to prevent overwriting
-            if (error) {
-                console.error(error);
-                res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
-            } else {
-                res.status(200).json({ message: 'Our Benfits content added successfully' });
-            }
-        }
-    );
+  dataCategory.query(
+      'INSERT INTO ourbenefitscontent (title, content) VALUES (?, ?)',
+      [title, content],
+      (error, results) => {
+          if (error) {
+              console.error(error);
+              res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+          } else {
+              // Get the id of the newly inserted item
+              const insertedId = results.insertId;
+              
+              // Now we need to query back the inserted item to send it back in the response
+              dataCategory.query(
+                  'SELECT * FROM ourbenefitscontent WHERE id = ?',
+                  [insertedId],
+                  (error, results) => {
+                      if (error) {
+                          console.error(error);
+                          res.status(500).json({ error: 'Internal Server Error', message: error.sqlMessage });
+                      } else {
+                          // If the new item is successfully retrieved, send it back in the response
+                          res.status(200).json(results[0]);
+                      }
+                  }
+              );
+          }
+      }
+  );
 }
+
 
 const addOurBenfits = async (req, res) => {
     const {sectionTitile, sectionSubtitile, imgSection } = req.body;

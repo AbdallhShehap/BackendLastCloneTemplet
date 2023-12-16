@@ -64,5 +64,23 @@ const pool = mysql.createPool({
 // You can export the pool directly for use in other modules
 module.exports = pool;
 
+// Optionally, you can test the pool by connecting and querying the database
+pool.getConnection((err, connection) => {
+  if (err) {
+    console.error("Error connecting to the database:", err);
+  } else {
+    console.log("Connected to the database");
 
+    // Execute a test query
+    connection.query("SELECT 1 + 1 AS result", (error, results) => {
+      if (error) {
+        console.error("Error executing query:", error);
+      } else {
+        console.log("Result:", results[0].result);
+      }
+      // Release the connection back to the pool
+      connection.release();
+    });
+  }
+});
 ﻿
